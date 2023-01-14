@@ -113,7 +113,7 @@ graphNodes[tr_Triangulation]:=tr[[6]]
 
 putWells[tr_Triangulation, points:{{_?NumericQ,_?NumericQ}..}]:= Module[{},
 
-TrWells[tr, edges, ]
+TrWells[tr, edges]
 ]
 
 
@@ -182,13 +182,23 @@ drawPict[st_SpanTree, optst_SpanTree, surface_, bounds:{{xl_?NumericQ, yl_?Numer
 
 
 
-sptreeminimize[tr_Triangulation, points_, {{x0_, y0_}, {x1_, y1_}}]:=NMinimize[{sptreeWeight[tr,points,{{a,b}, {c,d}}],
-x0<a<x1 && x0<c<x1 && y0<b<y1 && y0<d<y1},
- {a,b, c, d},
-Method->"SimulatedAnnealing",
-PrecisionGoal->2,
-AccuracyGoal->2,
-StepMonitor:>PrintTemporary[{{a,b},{c,d}}]];
+sptreeminimize[tr_Triangulation, points_, borders:{{x0_, y0_}, {x1_, y1_}}, numCrossings_Integer/;numCrossings>0]:=
+Module[{varPoints=Partition[Table[Unique[],{numCrossings*2}], 2],
+	bounds
+	},
+	bounds=Join[
+		Thread[LessEqual[x0, First/@varPoints, x1]],
+		Thread[LessEqual[y0, Last/@varPoints, y1]]
+		];
+	Print["Bounds: ", bounds];
+	NMinimize[{sptreeWeight[tr, points, varPoints],
+	   		And@@bounds},
+		Flatten@varPoints,
+		Method->"SimulatedAnnealing",
+		PrecisionGoal->2,
+		AccuracyGoal->2,
+		EvaluationMonitor:>Print[varPoints]]
+];
 
 
 (*Remove[surface];
