@@ -9,6 +9,12 @@ makeTriangulation::usage = "makeTriangulation[f_, nSegments_Integer, area:{{x1_?
 Triangulation::usage="jnhb";
 
 
+WellsOnTr::usage="zxcv";
+
+
+putWells::usage ="zxcv";
+
+
 graph::usage="jnhb";
 
 
@@ -105,9 +111,16 @@ graphNodes[tr_Triangulation]:=tr[[6]]
 
 
 
+putWells[tr_Triangulation, points:{{_?NumericQ,_?NumericQ}..}]:= Module[{},
+
+TrWells[tr, edges, ]
+]
+
+
 distance::ErrorArea="\:0412\:044b\:0445\:043e\:0434 \:0437\:0430 \:0433\:0440\:0430\:043d\:0438\:0446\:0443 \:043e\:0431\:043b\:0430\:0441\:0442\:0438 `1` \:043f\:0440\:0438 \:0432\:044b\:0447\:0438\:0441\:043b\:0435\:043d\:0438\:0438 \:0440\:0430\:0441\:0441\:0442\:043e\:044f\:043d\:0438\:044f \:043c\:0435\:0436\:0434\:0443 `2` \:0438 `3`.";
 
-distance[tr_Triangulation][ pt1:{x1_?NumericQ, y1_?NumericQ}, pt2:{x2_?NumericQ, y2_?NumericQ}]:=
+distance[tr_Triangulation][ pt1:{x1_?NumericQ, y1_?NumericQ}, pt2:{x2_?NumericQ, y2_?NumericQ}]:= 
+distance[tr][pt1,pt2]=
 With[{area=area[tr], nodeFinder=nodeFinder[tr]},
 	If[Not@And[area[[1,1]]<= x1 <= area[[2,1]], area[[1,1]] <= x2 <= area[[2,1]], area[[1,2]] <= y1 <= area[[2,2]], area[[1,2]] <= y2 <= area[[2,2]]],
 	Message[distance::ErrorArea, area, pt1, pt2]; Abort[]];
@@ -136,7 +149,7 @@ makeSpanTreeK[tr_Triangulation, points:{{_?NumericQ,_?NumericQ}..}, k: {{_?Numer
 			h = FindSpanningTree[g];
 			sppaths = Map[With[{i=#[[1]], j=#[[2]]},"path"/.distance[tr][NewPoints[[i]], NewPoints[[j]]]]&, EdgeList[h]];
 			(*Total[AnnotationValue[{h,#},EdgeWeight]&/@EdgeList[h]];*)
-
+			
 			SpanTree[paths, distances, NewPoints, AdjacencyMatrix[h], sppaths, Total[AnnotationValue[{h,#}, EdgeWeight]&/@EdgeList[h]]]
 		]
 	]
