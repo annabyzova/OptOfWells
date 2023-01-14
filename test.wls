@@ -13,7 +13,7 @@ With[{surface = Function[{x, y},
   tr = makeTriangulation[surface, gridSize, {{x0, y0}, {x1, y1}}];
   st = makeSpanTreeK[tr, points, 
     RandomReal[{Max[x0, y0], Min[x1, y1]}, {5, 2}]];
-  Print["Триангулировано!"];
+  (*Print["Триангулировано!"];*)
   
   bestK1 = sptreeminimize[tr, points, {{x0, y0}, {x1, y1}}];
   
