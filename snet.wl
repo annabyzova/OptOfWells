@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["Package`"];
+BeginPackage["optnet`"];
 
 
 makeTriangulation::usage = "makeTriangulation[f_, nSegments_Integer, area:{{x1_?NumericQ,y1_?NumericQ},{x2_?NumericQ,y2_?NumericQ}}] make Triangulation on area-Rectangle with lower left corner at {x1,y1} and upper right corner at {x2,y2} to n*n rectangles. Then add z=f(x,y)and get triangulation of surface";
