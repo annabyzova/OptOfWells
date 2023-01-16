@@ -6,32 +6,26 @@ BeginPackage["optnet`"];
 makeTriangulation::usage = "makeTriangulation[f_, nSegments_Integer, area:{{x1_?NumericQ,y1_?NumericQ},{x2_?NumericQ,y2_?NumericQ}}] make Triangulation on area-Rectangle with lower left corner at {x1,y1} and upper right corner at {x2,y2} to n*n rectangles. Then add z=f(x,y)and get triangulation of surface";
 
 
-Triangulation::usage="jnhb";
+Triangulation::usage="Triangulation[g, area, N@Abs[x2-x1]/nSegments,N@Abs[y2-y1]/nSegments, Function[{i,j},node[i,j]],node]";
 
 
-WellsOnTr::usage="zxcv";
+graph::usage="graph of triangulation";
 
 
-putWells::usage ="zxcv";
+area::usage="area of triangulation (bounds)";
 
 
-graph::usage="jnhb";
+gridStepX::usage="N@Abs[x2-x1]/nSegments grid step of triangulation for X";
 
 
-area::usage="jnhb";
-
-
-gridStepX::usage="jnhb";
-
-
-gridStepY::usage="jnhb";
+gridStepY::usage="N@Abs[y2-y1]/nSegmentsgrid step of triangulation for Y";
 
 
 (* ::Code::Initialization::Bold:: *)
-nodeFinder::usage="jnhb";
+nodeFinder::usage="by (x,y) function get the vertex number of the graph tr";
 
 
-graphNodes::usage="jnhb";
+graphNodes::usage="array of graph tr nodes ";
 
 
 distance::usage = "distance[tr_Triangulation][ pt1:{x1_?NumericQ, y1_?NumericQ}, pt2:{x2_?NumericQ, y2_?NumericQ}] calculate the distance between the points pt1 and pt2";
@@ -40,31 +34,31 @@ distance::usage = "distance[tr_Triangulation][ pt1:{x1_?NumericQ, y1_?NumericQ},
 makeSpanTreeK::usage = "make spanning tree with n points and k fork points";
 
 
-SpanTree::usage="njb";
+SpanTree::usage="SpanTree[paths, distances, NewPoints, AdjacencyMatrix[h], sppaths, Total[AnnotationValue[{h,#}, EdgeWeight]&/@EdgeList[h]]]";
 
 
-paths::usage="njb";
+paths::usage="path from one vertex to other";
 
 
-distances::usage="njb";
+distances::usage="distance from one vertex to other";
 
 
-pointslist::usage="njb";
+pointslist::usage="the coordinates of wells";
 
 
-adjmatr::usage="njb";
+adjmatr::usage="adjancy matrix of spanning tree";
 
 
-sppaths::usage="njb";
+sppaths::usage="paths in spanning tree";
 
 
-totalWeight::usage="njb";
+totalWeight::usage="total weight of spanning tree";
 
 
 sptreeWeight::usage="njb";
 
 
-sptreeminimize::usage="hgfr";
+sptreeminimize::usage="minimize the weight of spanning tree";
 
 
 drawPict::usage="make a 3d plot with surface, points of and paths. Red paths is optimal (with fork points) paths, blue isn't optimal ";
@@ -94,6 +88,7 @@ Flatten@Table[node[i,j]\[UndirectedEdge]node[i+1,j],{i,1,n-1},{j,n}],
 Flatten@Table[node[i,j]\[UndirectedEdge]node[i+1,j-1],{i,1,n-1},{j,2,n}]
 ];
 g=Graph[edges,EdgeWeight->{e:UndirectedEdge[n1_,n2_]:>grdist[n1,n2]}];
+Print["This graph from makeTriangulation "];
 Print[g];
 (*Print[FindSpanningTree[g]];*)
 (*HighlightGraph[g,FindSpanningTree[g],GraphHighlightStyle\[Rule]"Thick"];*)
@@ -109,12 +104,6 @@ gridStepY[tr_Triangulation]:=tr[[4]]
 nodeFinder[tr_Triangulation]:=tr[[5]]
 graphNodes[tr_Triangulation]:=tr[[6]]
 
-
-
-putWells[tr_Triangulation, points:{{_?NumericQ,_?NumericQ}..}]:= Module[{},
-
-TrWells[tr, edges, ]
-]
 
 
 distance::ErrorArea="\:0412\:044b\:0445\:043e\:0434 \:0437\:0430 \:0433\:0440\:0430\:043d\:0438\:0446\:0443 \:043e\:0431\:043b\:0430\:0441\:0442\:0438 `1` \:043f\:0440\:0438 \:0432\:044b\:0447\:0438\:0441\:043b\:0435\:043d\:0438\:0438 \:0440\:0430\:0441\:0441\:0442\:043e\:044f\:043d\:0438\:044f \:043c\:0435\:0436\:0434\:0443 `2` \:0438 `3`.";
@@ -139,7 +128,7 @@ With[{area=area[tr], nodeFinder=nodeFinder[tr]},
 
 
 makeSpanTreeK[tr_Triangulation, points:{{_?NumericQ,_?NumericQ}..}, k: {{_?NumericQ,_?NumericQ}...}]:=
-	Module[{edges,distances,g, paths, sppaths}, 
+	Module[{edges,distances,g, h, paths, sppaths}, 
 		With[{NewPoints = Join[points, k], nPoints = Length[points] + Length[k]},
 			edges = Join@@Table[If[i!=j, UndirectedEdge[i, j]],{i, 1, nPoints}, {j, 1, nPoints}];
 			edges = DeleteCases[edges, Null];
@@ -182,13 +171,23 @@ drawPict[st_SpanTree, optst_SpanTree, surface_, bounds:{{xl_?NumericQ, yl_?Numer
 
 
 
-sptreeminimize[tr_Triangulation, points_, {{x0_, y0_}, {x1_, y1_}}]:=NMinimize[{sptreeWeight[tr,points,{{a,b}, {c,d}}],
-x0<a<x1 && x0<c<x1 && y0<b<y1 && y0<d<y1},
- {a,b, c, d},
-Method->"SimulatedAnnealing",
-PrecisionGoal->2,
-AccuracyGoal->2,
-StepMonitor:>PrintTemporary[{{a,b},{c,d}}]];
+sptreeminimize[tr_Triangulation, points_, borders:{{x0_, y0_}, {x1_, y1_}}, numCrossings_Integer/;numCrossings>0]:=
+Module[{varPoints=Partition[Table[Unique[],{numCrossings*2}], 2],
+	bounds
+	},
+	bounds=Join[
+		Thread[LessEqual[x0, First/@varPoints, x1]],
+		Thread[LessEqual[y0, Last/@varPoints, y1]]
+		];
+	Print["Bounds: ", bounds];
+	NMinimize[{sptreeWeight[tr, points, varPoints],
+	   		And@@bounds},
+		Flatten@varPoints,
+		Method->"SimulatedAnnealing",
+		PrecisionGoal->2,
+		AccuracyGoal->2,
+		EvaluationMonitor:>Print[varPoints]]
+];
 
 
 (*Remove[surface];
