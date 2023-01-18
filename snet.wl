@@ -159,13 +159,15 @@ totalWeight[st]
 
 drawPict[st_SpanTree, optst_SpanTree, surface_, bounds:{{xl_?NumericQ, yl_?NumericQ},{xr_?NumericQ,yr_?NumericQ}}]:= 
 	With[{paths=sppaths[st],len = Length[sppaths[st]], distances=distances[st], ptl=pointslist[st], 
-		adjmatr = adjmatr[st], optpaths=sppaths[optst], optlen = Length[sppaths[optst]]},
+		adjmatr = adjmatr[st], optpaths=sppaths[optst], optlen = Length[sppaths[optst]], optptl=pointslist[optst]},
+		Print["Red line is paths of optimal graph, Magenta points is fork-points"];
 		Print@Show[{
-			Plot3D[surface[x,y],{x,xl,xr},{y,yl,yr}],
-			Graphics3D[
-			Map[{PointSize[Large],Black,Point[Join[#,{surface@@#}]]}&,ptl]],
-			Table[{ ListLinePlot3D[ Map[Append[#,surface@@#]&,paths[[t]] ]]}, {t,1,len}],
-			Table[{ ListLinePlot3D[ Map[Append[#,surface@@#]&,optpaths[[t]] ],  PlotStyle->{Red, Opacity[0.5]}]}, {t,1,optlen}]
+			Plot3D[surface[x,y],{x,xl,xr},{y,yl,yr}, PlotStyle->{LightYellow, Opacity[0.5]}],
+			Graphics3D[{
+			Map[{PointSize[Large],Cyan,Point[Join[#,{surface@@#}]]}&,ptl],
+			Map[{PointSize[Medium],Magenta,Point[Join[#,{surface@@#}]]}&,optptl]}],
+			Table[{ ListLinePlot3D[ Map[Append[#,surface@@#]&, paths[[t]]   ],  PlotStyle->{Blue, Dashed}]},{t,1,len}],
+			Table[{ ListLinePlot3D[ Map[Append[#,surface@@#]&, optpaths[[t]]],  PlotStyle->{Red, Opacity[0.5], Thick}]}, {t,1,optlen}]
 		}];
 ]
 
