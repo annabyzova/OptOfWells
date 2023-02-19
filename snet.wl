@@ -21,6 +21,9 @@ gridStepX::usage="N@Abs[x2-x1]/nSegments grid step of triangulation for X";
 gridStepY::usage="N@Abs[y2-y1]/nSegmentsgrid step of triangulation for Y";
 
 
+vertex::usage="vertex of triangulation";
+
+
 (* ::Code::Initialization::Bold:: *)
 nodeFinder::usage="by (x,y) function get the vertex number of the graph tr";
 
@@ -64,6 +67,23 @@ sptreeminimize::usage="minimize the weight of spanning tree";
 drawPict::usage="make a 3d plot with surface, points of and paths. Red paths is optimal (with fork points) paths, blue isn't optimal ";
 
 
+drawTriangl::usage="in process";
+
+
+basin::usage="in process";
+
+
+center::usage="in process";
+
+
+theHill::usage="in process";
+
+
+hill::usage = 
+  "\:0425\:043e\:043b\:043c \:0432 \:0437\:0430\:0434\:0430\:043d\:043d\:043e\:0439 \:0442\:043e\:0447\:043a\:0435. Height - \:0432\:044b\:0441\:043e\:0442\:0430, Width - \:043f\:0440\:0438\:043c\:0435\:0440\:043d\:044b\:0439 \:0440\:0430\:0434\:0438\:0443\:0441 \
+\:043e\:0441\:043d\:043e\:0432\:0430\:043d\:0438\:044f.";
+
+
 (*surface::usage ="jnhbg";*)
 
 
@@ -71,13 +91,14 @@ Begin["`Private`"];
 
 
 makeTriangulation[f_, nSegments_Integer, area:{{x1_?NumericQ,y1_?NumericQ},{x2_?NumericQ,y2_?NumericQ}}]:=
-Module[{g,grdist,graphNodes,node,xvert,yvert, edges,
-n=nSegments+1},
+Module[{g,grdist, graphNodes,node,xvert,yvert, edges,
+n=nSegments+1, vertex},
 graphNodes=Flatten@Array[node, {n,n}];
 xvert=With[{i=Part[#,1], j=Part[#,2]},
 x1+j*(x2-x1)/nSegments]&;
 yvert=With[{i=Part[#,1], j=Part[#,2]},
 x1+i*(x2-x1)/nSegments]&;
+vertex = Partition[Flatten@Table[{x1+k*(x2-x1)/nSegments, y1+l*(y2-y1)/nSegments, f[x1+k*(x2-x1)/nSegments, y1+l*(y2-y1)/nSegments]}, {{k, 1, n}, {l, 1, n}}],3];
 grdist=Function[{n1,n2},
 N@Norm[{xvert[n1]-xvert[n2],
 yvert[n1]-yvert[n2],
@@ -89,12 +110,14 @@ Flatten@Table[node[i,j]\[UndirectedEdge]node[i+1,j-1],{i,1,n-1},{j,2,n}]
 ];
 g=Graph[edges,EdgeWeight->{e:UndirectedEdge[n1_,n2_]:>grdist[n1,n2]}];
 Print["This graph from makeTriangulation "];
+Print[vertex];
 Print[g];
+
 (*Print[FindSpanningTree[g]];*)
 (*HighlightGraph[g,FindSpanningTree[g],GraphHighlightStyle\[Rule]"Thick"];*)
 (* Print[WeightedAdjacencyMatrix[g]//Normal//MatrixForm]; 
  Print@MatrixPlot[WeightedAdjacencyMatrix[g]]; *)
-Triangulation[g, area, N@Abs[x2-x1]/nSegments,N@Abs[y2-y1]/nSegments, Function[{i,j},node[i,j]],node]
+Triangulation[g, area, N@Abs[x2-x1]/nSegments,N@Abs[y2-y1]/nSegments, Function[{i,j},node[i,j]],node, vertex]
 ]
 
 graph[tr_Triangulation]:=tr[[1]]
@@ -103,6 +126,8 @@ gridStepX[tr_Triangulation]:=tr[[3]]
 gridStepY[tr_Triangulation]:=tr[[4]]
 nodeFinder[tr_Triangulation]:=tr[[5]]
 graphNodes[tr_Triangulation]:=tr[[6]]
+vertex[tr_Triangulation]:=tr[[7]]
+
 
 
 
@@ -124,6 +149,17 @@ With[{area=area[tr], nodeFinder=nodeFinder[tr]},
 	]
 ]  
 
+
+
+
+drawTriangl[tr_Triangulation, surface_, f_, bounds:{{xl_?NumericQ, yl_?NumericQ},{xr_?NumericQ,yr_?NumericQ}}]:=
+Module[{xverts = xvert[tr], yvert= yvert[tr]},
+Print@Show[{
+Plot3D[surface[x,y],{x,xl,xr},{y,yl,yr}, PlotStyle->{LightYellow, Opacity[0.5]}],
+Graphics3D[{
+Map[{PointSize[Large],Cyan,Point[Join[#,{surface@@#}]]}&,ptl],
+}]
+]
 
 
 
@@ -173,6 +209,9 @@ drawPict[st_SpanTree, optst_SpanTree, surface_, bounds:{{xl_?NumericQ, yl_?Numer
 
 
 
+drawTriangl[]:=;
+
+
 sptreeminimize[tr_Triangulation, points_, borders:{{x0_, y0_}, {x1_, y1_}}, numCrossings_Integer/;numCrossings>0]:=
 Module[{varPoints=Partition[Table[Unique[],{numCrossings*2}], 2],
 	bounds
@@ -196,6 +235,21 @@ Module[{varPoints=Partition[Table[Unique[],{numCrossings*2}], 2],
 surface[a_?NumericQ]:= Function[{x,y},
 3Cos[a*x*y]+hill[5,5][x,y]
 ];*)
+
+
+Options[hill] = {"Height" -> 10, "Width" -> 0.2};
+
+hill[center : {cx_?NumericQ, cy_?NumericQ}, OptionsPattern[] ] :=
+   Function[{x, y}, 
+   With[{r = Norm[{x - cx, y - cy}],
+     h = OptionValue["Height"], w = OptionValue["Width"]},
+    h*Exp[-(r)^2/(0.5*w)]]];
+    
+
+
+basin[center : {cx_?NumericQ, cy_?NumericQ}] :=
+ With[{theHill = hill[center, "Width" -> 5]},
+  Function[{x, y}, -theHill[x, y]]];
 
 
 End[];
